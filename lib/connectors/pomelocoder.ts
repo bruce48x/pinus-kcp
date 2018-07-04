@@ -1,0 +1,317 @@
+/**
+ * Copyright 2016 leenjewel
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+let supportPomeloPackage = true;
+
+const pinusRequire = function (requirePath: string) {
+    // for test local
+    // var pomeloPath = __dirname + '/../../../pomelo-server/game-server/node_modules/pomelo/lib/';
+    var pinusPath = __dirname + '/../../../pinus/dist/lib/';
+    try {
+        return require(pinusPath + requirePath);
+    } catch (e) {
+        supportPomeloPackage = false;
+        return undefined;
+    }
+};
+// var util = require('util');
+import util from 'util';
+const utils = pinusRequire('./util/utils');
+const handler = pinusRequire('./connectors/common/handler');
+const Constants = pinusRequire('./util/constants');
+const Kick = pinusRequire('./connectors/commands/kick');
+const Handshake = pinusRequire('./connectors/commands/handshake');
+const Heartbeat = pinusRequire('./connectors/commands/heartbeat');
+const coder = pinusRequire('./connectors/common/coder');
+const pinus = pinusRequire('../');
+import { IConnector } from '../interfaces/IConnector';
+
+import {Protocol, Package, Message} from 'pinus-protocol';
+// const Package = Protocol.Package;
+// const Message = Protocol.Message;
+supportPomeloPackage = true;
+// let protocol;
+// let Package;
+// let Message;
+// try {
+//     protocol = require('pomelo-protocol');
+//     Package = protocol.Package;
+//     Message = protocol.Message;
+// } catch (e) {
+//     supportPomeloPackage = false;
+//     protocol = undefined;
+//     Package = undefined;
+//     Message = undefined;
+// }
+
+// try {
+//     var protobuf = require('pomelo-protobuf');
+// } catch (e) {
+//     supportPomeloPackage = false;
+//     var protobuf = undefined;
+// }
+import { Protobuf } from 'pinus-protobuf';
+import { ISocket } from '../interfaces/ISocket';
+
+const RES_OK = 200;
+// let protocol: any;
+let protobuf: any;
+
+const getApp = function () {
+    if (!!pinus) {
+        return pinus.app;
+    }
+};
+
+const encode = function (reqid: number, route: string, msg: object) {
+    if (supportPomeloPackage) {
+        // return coder.encode.bind(this)(reqid, route, msg);
+        return coder.encode(reqid, route, msg);
+    } else {
+        return JSON.stringify({
+            id: reqid,
+            route,
+            body: msg
+        });
+    }
+};
+
+function decode(msg: Buffer): string;
+function decode(msg: string): string;
+function decode(msg: any) {
+    if (supportPomeloPackage) {
+        // return coder.decode.bind(this)(msg);
+        return coder.decode(msg);
+    } else {
+        if (msg instanceof Buffer) {
+            return JSON.parse(msg.toString());
+        } else if (typeof msg === 'string') {
+            return JSON.parse(msg);
+        } else {
+            return '';
+        }
+    }
+}
+
+var setupHandler = function (connector: any, socket: any, opts: any) {
+    if (supportPomeloPackage) {
+        connector.handshake = connector.handshake || new Handshake(opts);
+        if (!connector.heartbeat) {
+            if (!opts.heartbeat) {
+                opts.heartbeat = opts.interval / 1000;
+                opts.timeout = opts.heartbeat * 2;
+            }
+            if (opts.heartbeat * 1000 < opts.interval) {
+                console.warn('heartbeat interval must longer than kcp interval');
+                opts.heartbeat = opts.interval / 1000;
+            }
+            if (opts.timeout * 1000 < 2 * opts.interval) {
+                console.warn('timeout must longer than kcp interval * 2');
+                opts.timeout = opts.heartbeat * 2;
+            }
+            connector.heartbeat = new Heartbeat(utils.extends(opts, { disconnectOnTimeout: true }));
+        }
+        socket.on('handshake',
+            connector.handshake.handle.bind(connector.handshake, socket));
+        socket.on('heartbeat',
+            connector.heartbeat.handle.bind(connector.heartbeat, socket));
+        socket.on('disconnect',
+            connector.heartbeat.clear.bind(connector.heartbeat, socket.id));
+        socket.on('disconnect', function () {
+            connector.emit('disconnect', socket);
+        });
+        socket.on('closing', Kick.handle.bind(null, socket));
+    }
+};
+
+var handlePackage = function (socket: any, pkg: any) {
+    if (!!pkg && supportPomeloPackage) {
+        pkg = Package.decode(pkg);
+        if (Array.isArray(pkg)) {
+            for (var p in pkg) {
+                if (isHandshakeACKPackage(pkg[p].type)) {
+                    socket.state = 2; // ST_WORKING
+                }
+                handler(socket, pkg[p]);
+            }
+        } else {
+            if (isHandshakeACKPackage(pkg.type)) {
+                socket.state = 2; // ST_WORKING
+            }
+            handler(socket, pkg);
+        }
+    } else {
+        socket.emit('message', pkg);
+    }
+};
+
+var heartbeatInterval = 0;
+var getHeartbeatInterval = function () { return heartbeatInterval; };
+var heartbeatTimeout = 0;
+var getHeartbeatTimeout = function () { return heartbeatTimeout; };
+var pomeloCoderData: { dict: any, abbrs: any , protos: any} = { dict: null, abbrs: null , protos: null};
+var initProtocol = function (data: any) {
+    if (!!data && supportPomeloPackage) {
+        if (data.code !== RES_OK) {
+            console.warn('Handshake response code : ' + data.code);
+            return;
+        }
+        if (!data || !data.sys) {
+            console.warn('Handshake response sys is undefained');
+            return;
+        }
+        if (!!data.sys && !!data.sys.heartbeat) {
+            heartbeatInterval = data.sys.heartbeat * 1000;
+            heartbeatTimeout = heartbeatInterval * 2;
+        }
+        var dict = data.sys.dict;
+        var protos = data.sys.protos;
+        if (!!dict) {
+            pomeloCoderData.dict = dict;
+            pomeloCoderData.abbrs = {};
+
+            for (var route in dict) {
+                pomeloCoderData.abbrs[dict[route]] = route;
+            }
+        }
+        if (!!protos) {
+            pomeloCoderData.protos = {
+                server: protos.server || {},
+                client: protos.client || {}
+            };
+            if (!!Protobuf) {
+                protobuf = new Protobuf({
+                    encoderProtos: protos.client,
+                    decoderProtos: protos.server
+                });
+            }
+        }
+    }
+};
+
+var handshakePackage = function (userdata: object) {
+    userdata = userdata || {};
+    return (Package.encode(
+        Package.TYPE_HANDSHAKE,
+        Protocol.strencode(JSON.stringify({
+            sys: {
+                version: '1.1.1',
+                type: 'socket'
+            },
+            user: userdata
+        }))
+    ));
+};
+
+var pomeloHandshakeAckPkg = Package.encode(Package.TYPE_HANDSHAKE_ACK);
+var handshakeAckPackage = function () {
+    return pomeloHandshakeAckPkg;
+};
+
+var pomeloHeartbeatPkg = Package.encode(Package.TYPE_HEARTBEAT);
+var heartbeatPackage = function () {
+    return pomeloHeartbeatPkg;
+};
+
+var messagePackage = function (reqid: number, route: string, msg: any) {
+    var type = reqid ? Message.TYPE_REQUEST : Message.TYPE_NOTIFY;
+    var protos = !!pomeloCoderData.protos ? pomeloCoderData.protos.client : {};
+    if (!!protos[route]) {
+        msg = protobuf.encode(route, msg);
+    } else {
+        msg = Protocol.strencode(JSON.stringify(msg));
+    }
+    var compressRoute = 0;
+    if (!!pomeloCoderData.dict && !!pomeloCoderData.dict[route]) {
+        route = pomeloCoderData.dict[route];
+        compressRoute = 1;
+    }
+    msg = Message.encode(reqid, type, !!compressRoute, route, msg);
+    return Package.encode(Package.TYPE_DATA, msg);
+};
+
+var isHandshakePackage = function (type: number) {
+    return (supportPomeloPackage && type == Package.TYPE_HANDSHAKE);
+}
+
+var isHandshakeACKPackage = function (type: number) {
+    return (supportPomeloPackage && type == Package.TYPE_HANDSHAKE_ACK);
+}
+
+var isHeartbeatPackage = function (type: number) {
+    return (supportPomeloPackage && type == Package.TYPE_HEARTBEAT);
+}
+
+var isDataPackage = function (type: number) {
+    return (supportPomeloPackage && type == Package.TYPE_DATA);
+}
+
+var isKickPackage = function (type: number) {
+    return (supportPomeloPackage && type == Package.TYPE_KICK);
+}
+
+var kcpHeadDecode = function (bytes: Buffer) {
+    //小端
+    var offset = 0;
+    var conv = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    var cmd = bytes[offset++];
+    var frg = bytes[offset++];
+    var wnd = ((bytes[offset++]) | (bytes[offset++] << 8)) >>> 0;
+    var ts = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    var sn = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    var una = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    var len = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+
+    var rs = {
+        conv: conv,
+        cmd: cmd,
+        frg: frg,
+        wnd: wnd,
+        ts: ts,
+        sn: sn,
+        una: una,
+        len: len
+    };
+
+    // if (bytes.length >= len + 24) {
+    //     rs.data = Buffer.from(bytes, 24, len);
+    // }
+    return rs;
+};
+
+export = {
+    encode: encode,
+    decode: decode,
+    getApp: getApp,
+    isHandshakePackage: isHandshakePackage,
+    isHandshakeACKPackage: isHandshakeACKPackage,
+    isHeartbeatPackage: isHeartbeatPackage,
+    isDataPackage: isDataPackage,
+    isKickPackage: isKickPackage,
+    decodePackage: Package.decode,
+    decodeMessage: Message.decode,
+    setupHandler: setupHandler,
+    initProtocol: initProtocol,
+    getHeartbeatInterval: getHeartbeatInterval,
+    getHeartbeatTimeout: getHeartbeatTimeout,
+    handlePackage: handlePackage,
+    handshakePackage: handshakePackage,
+    handshakeAckPackage: handshakeAckPackage,
+    heartbeatPackage: heartbeatPackage,
+    messagePackage: messagePackage,
+    kcpHeadDecode: kcpHeadDecode
+};
+
