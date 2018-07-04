@@ -14,6 +14,4 @@
  * limitations under the License.
  */
 
-module.exports = {
-    kcpconnector: require('./connectors/kcpconnector')
-};
+export * from './connectors/kcpconnector';
