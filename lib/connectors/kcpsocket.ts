@@ -15,11 +15,11 @@
  */
 
 import { EventEmitter } from 'events';
-import kcp from 'node-kcp-x';
-import pomelocoder from './pomelocoder';
+import * as kcp from 'node-kcp-x';
+import * as pomelocoder from './pomelocoder';
 import * as protocol from 'pinus-protocol';
 const Package = protocol.Package;
-import dgram from 'dgram';
+import * as dgram from 'dgram';
 import { ISocket } from '../interfaces/ISocket';
 
 const ST_INITED = 0;

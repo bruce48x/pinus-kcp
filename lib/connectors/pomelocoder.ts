@@ -28,7 +28,7 @@ const pinusRequire = function (requirePath: string) {
     }
 };
 // let util = require('util');
-import util from 'util';
+import * as util from 'util';
 const utils = pinusRequire('./util/utils');
 const handler = pinusRequire('./connectors/common/handler');
 const Constants = pinusRequire('./util/constants');
