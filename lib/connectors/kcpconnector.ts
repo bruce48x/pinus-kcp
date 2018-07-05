@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import dgram from 'dgram';
+import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
 import KcpSocket from './kcpsocket';
-import pomelocoder from './pomelocoder';
+import * as pomelocoder from './pomelocoder';
 
 let curId = 1;
 

@@ -18,8 +18,8 @@ let supportPomeloPackage = true;
 
 const pinusRequire = function (requirePath: string) {
     // for test local
-    // var pomeloPath = __dirname + '/../../../pomelo-server/game-server/node_modules/pomelo/lib/';
-    var pinusPath = __dirname + '/../../../pinus/dist/lib/';
+    // let pomeloPath = __dirname + '/../../../pomelo-server/game-server/node_modules/pomelo/lib/';
+    let pinusPath = __dirname + '/../../../pinus/dist/lib/';
     try {
         return require(pinusPath + requirePath);
     } catch (e) {
@@ -27,7 +27,7 @@ const pinusRequire = function (requirePath: string) {
         return undefined;
     }
 };
-// var util = require('util');
+// let util = require('util');
 import util from 'util';
 const utils = pinusRequire('./util/utils');
 const handler = pinusRequire('./connectors/common/handler');
@@ -58,10 +58,10 @@ supportPomeloPackage = true;
 // }
 
 // try {
-//     var protobuf = require('pomelo-protobuf');
+//     let protobuf = require('pomelo-protobuf');
 // } catch (e) {
 //     supportPomeloPackage = false;
-//     var protobuf = undefined;
+//     let protobuf = undefined;
 // }
 import { Protobuf } from 'pinus-protobuf';
 import { ISocket } from '../interfaces/ISocket';
@@ -70,13 +70,13 @@ const RES_OK = 200;
 // let protocol: any;
 let protobuf: any;
 
-const getApp = function () {
+export const getApp = function () {
     if (!!pinus) {
         return pinus.app;
     }
 };
 
-const encode = function (reqid: number, route: string, msg: object) {
+export const encode = function (reqid: number, route: string, msg: object) {
     if (supportPomeloPackage) {
         // return coder.encode.bind(this)(reqid, route, msg);
         return coder.encode(reqid, route, msg);
@@ -89,9 +89,9 @@ const encode = function (reqid: number, route: string, msg: object) {
     }
 };
 
-function decode(msg: Buffer): string;
-function decode(msg: string): string;
-function decode(msg: any) {
+export function decode(msg: Buffer): string;
+export function decode(msg: string): string;
+export function decode(msg: any) {
     if (supportPomeloPackage) {
         // return coder.decode.bind(this)(msg);
         return coder.decode(msg);
@@ -106,7 +106,7 @@ function decode(msg: any) {
     }
 }
 
-var setupHandler = function (connector: any, socket: any, opts: any) {
+export const setupHandler = function (connector: any, socket: any, opts: any) {
     if (supportPomeloPackage) {
         connector.handshake = connector.handshake || new Handshake(opts);
         if (!connector.heartbeat) {
@@ -137,11 +137,11 @@ var setupHandler = function (connector: any, socket: any, opts: any) {
     }
 };
 
-var handlePackage = function (socket: any, pkg: any) {
+export const handlePackage = function (socket: any, pkg: any) {
     if (!!pkg && supportPomeloPackage) {
         pkg = Package.decode(pkg);
         if (Array.isArray(pkg)) {
-            for (var p in pkg) {
+            for (let p in pkg) {
                 if (isHandshakeACKPackage(pkg[p].type)) {
                     socket.state = 2; // ST_WORKING
                 }
@@ -158,12 +158,12 @@ var handlePackage = function (socket: any, pkg: any) {
     }
 };
 
-var heartbeatInterval = 0;
-var getHeartbeatInterval = function () { return heartbeatInterval; };
-var heartbeatTimeout = 0;
-var getHeartbeatTimeout = function () { return heartbeatTimeout; };
-var pomeloCoderData: { dict: any, abbrs: any , protos: any} = { dict: null, abbrs: null , protos: null};
-var initProtocol = function (data: any) {
+let heartbeatInterval = 0;
+export const getHeartbeatInterval = function () { return heartbeatInterval; };
+let heartbeatTimeout = 0;
+export const getHeartbeatTimeout = function () { return heartbeatTimeout; };
+let pomeloCoderData: { dict: any, abbrs: any , protos: any} = { dict: null, abbrs: null , protos: null};
+export const initProtocol = function (data: any) {
     if (!!data && supportPomeloPackage) {
         if (data.code !== RES_OK) {
             console.warn('Handshake response code : ' + data.code);
@@ -177,13 +177,13 @@ var initProtocol = function (data: any) {
             heartbeatInterval = data.sys.heartbeat * 1000;
             heartbeatTimeout = heartbeatInterval * 2;
         }
-        var dict = data.sys.dict;
-        var protos = data.sys.protos;
+        let dict = data.sys.dict;
+        let protos = data.sys.protos;
         if (!!dict) {
             pomeloCoderData.dict = dict;
             pomeloCoderData.abbrs = {};
 
-            for (var route in dict) {
+            for (let route in dict) {
                 pomeloCoderData.abbrs[dict[route]] = route;
             }
         }
@@ -202,7 +202,7 @@ var initProtocol = function (data: any) {
     }
 };
 
-var handshakePackage = function (userdata: object) {
+export const handshakePackage = function (userdata: object) {
     userdata = userdata || {};
     return (Package.encode(
         Package.TYPE_HANDSHAKE,
@@ -216,25 +216,25 @@ var handshakePackage = function (userdata: object) {
     ));
 };
 
-var pomeloHandshakeAckPkg = Package.encode(Package.TYPE_HANDSHAKE_ACK);
-var handshakeAckPackage = function () {
+let pomeloHandshakeAckPkg = Package.encode(Package.TYPE_HANDSHAKE_ACK);
+export const handshakeAckPackage = function () {
     return pomeloHandshakeAckPkg;
 };
 
-var pomeloHeartbeatPkg = Package.encode(Package.TYPE_HEARTBEAT);
-var heartbeatPackage = function () {
+let pomeloHeartbeatPkg = Package.encode(Package.TYPE_HEARTBEAT);
+export const heartbeatPackage = function () {
     return pomeloHeartbeatPkg;
 };
 
-var messagePackage = function (reqid: number, route: string, msg: any) {
-    var type = reqid ? Message.TYPE_REQUEST : Message.TYPE_NOTIFY;
-    var protos = !!pomeloCoderData.protos ? pomeloCoderData.protos.client : {};
+export const messagePackage = function (reqid: number, route: string, msg: any) {
+    let type = reqid ? Message.TYPE_REQUEST : Message.TYPE_NOTIFY;
+    let protos = !!pomeloCoderData.protos ? pomeloCoderData.protos.client : {};
     if (!!protos[route]) {
         msg = protobuf.encode(route, msg);
     } else {
         msg = Protocol.strencode(JSON.stringify(msg));
     }
-    var compressRoute = 0;
+    let compressRoute = 0;
     if (!!pomeloCoderData.dict && !!pomeloCoderData.dict[route]) {
         route = pomeloCoderData.dict[route];
         compressRoute = 1;
@@ -243,39 +243,39 @@ var messagePackage = function (reqid: number, route: string, msg: any) {
     return Package.encode(Package.TYPE_DATA, msg);
 };
 
-var isHandshakePackage = function (type: number) {
+export const isHandshakePackage = function (type: number) {
     return (supportPomeloPackage && type == Package.TYPE_HANDSHAKE);
 }
 
-var isHandshakeACKPackage = function (type: number) {
+export const isHandshakeACKPackage = function (type: number) {
     return (supportPomeloPackage && type == Package.TYPE_HANDSHAKE_ACK);
 }
 
-var isHeartbeatPackage = function (type: number) {
+export const isHeartbeatPackage = function (type: number) {
     return (supportPomeloPackage && type == Package.TYPE_HEARTBEAT);
 }
 
-var isDataPackage = function (type: number) {
+export const isDataPackage = function (type: number) {
     return (supportPomeloPackage && type == Package.TYPE_DATA);
 }
 
-var isKickPackage = function (type: number) {
+export const isKickPackage = function (type: number) {
     return (supportPomeloPackage && type == Package.TYPE_KICK);
 }
 
-var kcpHeadDecode = function (bytes: Buffer) {
+export const kcpHeadDecode = function (bytes: Buffer) {
     //小端
-    var offset = 0;
-    var conv = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
-    var cmd = bytes[offset++];
-    var frg = bytes[offset++];
-    var wnd = ((bytes[offset++]) | (bytes[offset++] << 8)) >>> 0;
-    var ts = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
-    var sn = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
-    var una = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
-    var len = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    let offset = 0;
+    let conv = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    let cmd = bytes[offset++];
+    let frg = bytes[offset++];
+    let wnd = ((bytes[offset++]) | (bytes[offset++] << 8)) >>> 0;
+    let ts = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    let sn = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    let una = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
+    let len = ((bytes[offset++]) | (bytes[offset++] << 8) | (bytes[offset++] << 16) | (bytes[offset++] << 24)) >>> 0;
 
-    var rs = {
+    let rs = {
         conv: conv,
         cmd: cmd,
         frg: frg,
@@ -292,26 +292,8 @@ var kcpHeadDecode = function (bytes: Buffer) {
     return rs;
 };
 
-export = {
-    encode: encode,
-    decode: decode,
-    getApp: getApp,
-    isHandshakePackage: isHandshakePackage,
-    isHandshakeACKPackage: isHandshakeACKPackage,
-    isHeartbeatPackage: isHeartbeatPackage,
-    isDataPackage: isDataPackage,
-    isKickPackage: isKickPackage,
+export const coders = {
     decodePackage: Package.decode,
     decodeMessage: Message.decode,
-    setupHandler: setupHandler,
-    initProtocol: initProtocol,
-    getHeartbeatInterval: getHeartbeatInterval,
-    getHeartbeatTimeout: getHeartbeatTimeout,
-    handlePackage: handlePackage,
-    handshakePackage: handshakePackage,
-    handshakeAckPackage: handshakeAckPackage,
-    heartbeatPackage: heartbeatPackage,
-    messagePackage: messagePackage,
-    kcpHeadDecode: kcpHeadDecode
 };
 
