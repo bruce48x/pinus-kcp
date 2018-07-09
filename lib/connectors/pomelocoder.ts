@@ -17,9 +17,7 @@
 let supportPomeloPackage = true;
 
 const pinusRequire = function (requirePath: string) {
-    // for test local
-    // let pomeloPath = __dirname + '/../../../pomelo-server/game-server/node_modules/pomelo/lib/';
-    let pinusPath = __dirname + '/../../../pinus/dist/lib/';
+    let pinusPath = __dirname + '/../../../../pinus/dist/lib/';
     try {
         return require(pinusPath + requirePath);
     } catch (e) {
@@ -36,7 +34,8 @@ const Kick = pinusRequire('./connectors/commands/kick');
 const Handshake = pinusRequire('./connectors/commands/handshake');
 const Heartbeat = pinusRequire('./connectors/commands/heartbeat');
 const coder = pinusRequire('./connectors/common/coder');
-const pinus = pinusRequire('../');
+const Pinus = pinusRequire('./');
+const pinus = Pinus.pinus;
 import { IConnector } from '../interfaces/IConnector';
 
 import {Protocol, Package, Message} from 'pinus-protocol';
