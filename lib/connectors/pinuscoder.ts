@@ -39,12 +39,12 @@ let util = require('util');
 import { pinus } from 'pinus';
 // import { utils } from 'pinus/dist/lib/util/utils.ts';
 const utils = require('pinus/dist/lib/util/utils');
-const handler = pinusRequire('pinus/dist/lib/connectors/common/handler');
-const Constants = pinusRequire('pinus/dist/lib/util/constants');
-const Kick = pinusRequire('pinus/dist/lib/connectors/commands/kick');
-const Handshake = pinusRequire('pinus/dist/lib/connectors/commands/handshake');
-const Heartbeat = pinusRequire('pinus/dist/lib/connectors/commands/heartbeat');
-const coder = pinusRequire('pinus/dist/lib/connectors/common/coder');
+const handler = require('pinus/dist/lib/connectors/common/handler');
+const Constants = require('pinus/dist/lib/util/constants');
+const Kick = require('pinus/dist/lib/connectors/commands/kick');
+const HandshakeCommand = require('pinus/dist/lib/connectors/commands/handshake');
+const HeartbeatCommand = require('pinus/dist/lib/connectors/commands/heartbeat');
+const coder = require('pinus/dist/lib/connectors/common/coder');
 import { IConnector } from '../interfaces/IConnector';
 
 import {Protocol, Package, Message} from 'pinus-protocol';
@@ -116,7 +116,7 @@ export function decode(msg: any) {
 
 export const setupHandler = function (connector: any, socket: any, opts: any) {
     if (supportPomeloPackage) {
-        connector.handshake = connector.handshake || new Handshake(opts);
+        connector.handshake = connector.handshake || new HandshakeCommand(opts);
         if (!connector.heartbeat) {
             if (!opts.heartbeat) {
                 opts.heartbeat = opts.interval / 1000;
@@ -130,7 +130,7 @@ export const setupHandler = function (connector: any, socket: any, opts: any) {
                 console.warn('timeout must longer than kcp interval * 2');
                 opts.timeout = opts.heartbeat * 2;
             }
-            connector.heartbeat = new Heartbeat(utils.extends(opts, { disconnectOnTimeout: true }));
+            connector.heartbeat = new HeartbeatCommand(utils.extends(opts, { disconnectOnTimeout: true }));
         }
         socket.on('handshake',
             connector.handshake.handle.bind(connector.handshake, socket));
