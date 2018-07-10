@@ -42,8 +42,10 @@ const utils = require('pinus/dist/lib/util/utils');
 const handler = require('pinus/dist/lib/connectors/common/handler');
 const Constants = require('pinus/dist/lib/util/constants');
 const Kick = require('pinus/dist/lib/connectors/commands/kick');
-const HandshakeCommand = require('pinus/dist/lib/connectors/commands/handshake');
-const HeartbeatCommand = require('pinus/dist/lib/connectors/commands/heartbeat');
+const Handshake = require('pinus/dist/lib/connectors/commands/handshake');
+const HandshakeCommand = Handshake.HandshakeCommand;
+const Heartbeat = require('pinus/dist/lib/connectors/commands/heartbeat');
+const HeartbeatCommand = Heartbeat.HeartbeatCommand; 
 const coder = require('pinus/dist/lib/connectors/common/coder');
 import { IConnector } from '../interfaces/IConnector';
 
