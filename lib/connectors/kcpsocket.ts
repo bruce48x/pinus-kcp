@@ -21,18 +21,7 @@ import * as protocol from 'pinus-protocol';
 const Package = protocol.Package;
 import * as dgram from 'dgram';
 import { ISocket } from '../interfaces/ISocket';
-
-const ST_INITED = 0;
-const ST_WAIT_ACK = 1;
-const ST_WORKING = 2;
-const ST_CLOSED = 3;
-
-enum State {
-    INITED = 0,
-    WAIT_ACK = 1,
-    WORKING = 2,
-    CLOSED = 3,
-};
+import { NetState } from '../const/const';
 
 var output = function (data: any, size: number, thiz: any) {
     thiz.socket.send(data, 0, size, thiz.port, thiz.host);
@@ -84,21 +73,16 @@ export default class KcpSocket extends EventEmitter implements ISocket {
             this.kcpObj.input(msg);
             var data = this.kcpObj.recv();
             if (!!data) {
-                if (this.opts) {
-                    pinuscoder.handlePackage(this, data);
-                } else {
-                    this.emit('message', data);
-                }
+                pinuscoder.handlePackage(this, data);
             }
         });
 
         this.check();
-        this.state = ST_INITED;
+        this.state = NetState.INITED;
 
         // 超时还未握手就绪，就删除此 socket
         this._initTimer = setTimeout(() => {
-            if (this.state === ST_INITED
-                || this.state !== ST_WORKING) {
+            if ( this.state !== NetState.WORKING) {
                 this.disconnect();
             }
             this._initTimer = null;
@@ -117,7 +101,7 @@ export default class KcpSocket extends EventEmitter implements ISocket {
     }
 
     send(msg: any) {
-        if (this.state != ST_WORKING) {
+        if (this.state != NetState.WORKING) {
             return;
         }
         if (typeof msg === 'string') {
@@ -137,14 +121,14 @@ export default class KcpSocket extends EventEmitter implements ISocket {
     }
 
     sendForce(msg: Buffer) {
-        if (this.state == ST_CLOSED) {
+        if (this.state == NetState.CLOSED) {
             return;
         }
         this.sendRaw(msg);
     }
 
     sendBatch(msgs: Buffer[]) {
-        if (this.state != ST_WORKING) {
+        if (this.state != NetState.WORKING) {
             return;
         }
         var rs = [];
@@ -155,18 +139,18 @@ export default class KcpSocket extends EventEmitter implements ISocket {
     }
 
     handshakeResponse(resp: Buffer) {
-        if (this.state !== ST_INITED) {
+        if (this.state !== NetState.INITED) {
             return;
         }
         this.sendRaw(resp);
-        this.state = ST_WAIT_ACK;
+        this.state = NetState.WAIT_ACK;
     }
 
     disconnect() {
-        if (this.state == ST_CLOSED) {
+        if (this.state == NetState.CLOSED) {
             return;
         }
-        this.state = ST_CLOSED;
+        this.state = NetState.CLOSED;
         this.emit('disconnect', 'kcp connection disconnected');
         if (this.kcpObj) {
             this.kcpObj.release();

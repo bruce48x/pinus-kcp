@@ -27,6 +27,7 @@ const HeartbeatCommand = Heartbeat.HeartbeatCommand;
 const coder = require('pinus/dist/lib/connectors/common/coder');
 import { Protocol, Package, Message } from 'pinus-protocol';
 import { Protobuf } from 'pinus-protobuf';
+import { NetState } from '../const/const';
 
 import { IConnector } from '../interfaces/IConnector';
 import { ISocket } from '../interfaces/ISocket';
@@ -84,13 +85,13 @@ export const handlePackage = function (socket: any, pkg: any) {
     if (Array.isArray(pkg)) {
         for (let p in pkg) {
             if (isHandshakeACKPackage(pkg[p].type)) {
-                socket.state = 2; // ST_WORKING
+                socket.state = NetState.WORKING; // ST_WORKING
             }
             handler(socket, pkg[p]);
         }
     } else {
         if (isHandshakeACKPackage(pkg.type)) {
-            socket.state = 2; // ST_WORKING
+            socket.state = NetState.WORKING; // ST_WORKING
         }
         handler(socket, pkg);
     }
