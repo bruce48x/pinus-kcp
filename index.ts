@@ -1,1 +1,1 @@
-export * from './lib/kcpconnector';
+export * from './lib/connectors/kcpconnector';

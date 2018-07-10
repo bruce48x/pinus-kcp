@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 import * as kcp from 'node-kcp-x';
-import * as pomelocoder from './pomelocoder';
+import * as pinuscoder from './pinuscoder';
 import * as protocol from 'pinus-protocol';
 const Package = protocol.Package;
 import * as dgram from 'dgram';
@@ -90,7 +90,7 @@ export default class KcpSocket extends EventEmitter implements ISocket {
             var data = this.kcpobj.recv();
             if (!!data) {
                 if (self.opts && self.opts.usePomeloPackage) {
-                    pomelocoder.handlePackage(self, data);
+                    pinuscoder.handlePackage(self, data);
                 } else {
                     self.emit('message', data);
                 }

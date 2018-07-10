@@ -25,17 +25,26 @@ const pinusRequire = function (requirePath: string) {
         return undefined;
     }
 };
-// let util = require('util');
-import * as util from 'util';
-const utils = pinusRequire('./util/utils');
-const handler = pinusRequire('./connectors/common/handler');
-const Constants = pinusRequire('./util/constants');
-const Kick = pinusRequire('./connectors/commands/kick');
-const Handshake = pinusRequire('./connectors/commands/handshake');
-const Heartbeat = pinusRequire('./connectors/commands/heartbeat');
-const coder = pinusRequire('./connectors/common/coder');
-const Pinus = pinusRequire('./');
-const pinus = Pinus.pinus;
+let util = require('util');
+// import * as util from 'util';
+// const utils = pinusRequire('./util/utils');
+// const handler = pinusRequire('./connectors/common/handler');
+// const Constants = pinusRequire('./util/constants');
+// const Kick = pinusRequire('./connectors/commands/kick');
+// const Handshake = pinusRequire('./connectors/commands/handshake');
+// const Heartbeat = pinusRequire('./connectors/commands/heartbeat');
+// const coder = pinusRequire('./connectors/common/coder');
+// const Pinus = pinusRequire('./');
+// const pinus = Pinus.pinus;
+import { pinus } from 'pinus';
+// import { utils } from 'pinus/dist/lib/util/utils.ts';
+const utils = require('pinus/dist/lib/util/utils');
+const handler = pinusRequire('pinus/dist/lib/connectors/common/handler');
+const Constants = pinusRequire('pinus/dist/lib/util/constants');
+const Kick = pinusRequire('pinus/dist/lib/connectors/commands/kick');
+const Handshake = pinusRequire('pinus/dist/lib/connectors/commands/handshake');
+const Heartbeat = pinusRequire('pinus/dist/lib/connectors/commands/heartbeat');
+const coder = pinusRequire('pinus/dist/lib/connectors/common/coder');
 import { IConnector } from '../interfaces/IConnector';
 
 import {Protocol, Package, Message} from 'pinus-protocol';

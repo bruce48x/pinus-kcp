@@ -17,7 +17,7 @@
 import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
 import KcpSocket from './kcpsocket';
-import * as pomelocoder from './pomelocoder';
+import * as pinuscoder from './pinuscoder';
 
 let curId = 1;
 
@@ -48,7 +48,7 @@ export class Connector extends EventEmitter {
     start(cb: () => void) {
         var self = this;
         if (this.opts.usePomeloPackage) {
-            var app = pomelocoder.getApp();
+            var app = pinuscoder.getApp();
             this.connector = app.components.__connector__.connector;
             this.dictionary = app.components.__dictionary__;
             this.protobuf = app.components.__protobuf__;
@@ -73,14 +73,14 @@ export class Connector extends EventEmitter {
         const self = this;
         let conv, kcpsocket: KcpSocket | undefined;
         if (msg) {
-            var kcpHead = pomelocoder.kcpHeadDecode(msg);
+            var kcpHead = pinuscoder.kcpHeadDecode(msg);
             conv = kcpHead.conv;
             kcpsocket = self.clientsForKcp[conv];
         }
         if (!kcpsocket && conv) {
             kcpsocket = new KcpSocket(curId++, socket, address, port, Object.assign({ conv: conv }, self.opts));
             if (!!self.opts && self.opts.usePomeloPackage) {
-                pomelocoder.setupHandler(self, kcpsocket, self.opts);
+                pinuscoder.setupHandler(self, kcpsocket, self.opts);
             }
             self.clientsForKcp[conv] = kcpsocket;
             self.emit('connection', kcpsocket);
@@ -92,7 +92,7 @@ export class Connector extends EventEmitter {
     // static decode = decode;
     decode(msg: Buffer | string) {
         if (this.opts && this.opts.usePomeloPackage) {
-            return pomelocoder.decode.bind(this)(msg);
+            return pinuscoder.decode.bind(this)(msg);
         } else {
             if (msg instanceof Buffer) {
                 return JSON.parse(msg.toString());
@@ -105,7 +105,7 @@ export class Connector extends EventEmitter {
     // static encode 
     encode(reqid: number, route: string, msg: any) {
         if (this.opts && this.opts.usePomeloPackage) {
-            return pomelocoder.encode.bind(this)(reqid, route, msg);
+            return pinuscoder.encode.bind(this)(reqid, route, msg);
         } else {
             return JSON.stringify({
                 id: reqid,
