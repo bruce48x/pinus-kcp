@@ -14,70 +14,24 @@
  * limitations under the License.
  */
 
-let supportPomeloPackage = true;
-
-const pinusRequire = function (requirePath: string) {
-    let pinusPath = __dirname + '/../../../../pinus/dist/lib/';
-    try {
-        return require(pinusPath + requirePath);
-    } catch (e) {
-        supportPomeloPackage = false;
-        return undefined;
-    }
-};
-let util = require('util');
-// import * as util from 'util';
-// const utils = pinusRequire('./util/utils');
-// const handler = pinusRequire('./connectors/common/handler');
-// const Constants = pinusRequire('./util/constants');
-// const Kick = pinusRequire('./connectors/commands/kick');
-// const Handshake = pinusRequire('./connectors/commands/handshake');
-// const Heartbeat = pinusRequire('./connectors/commands/heartbeat');
-// const coder = pinusRequire('./connectors/common/coder');
-// const Pinus = pinusRequire('./');
-// const pinus = Pinus.pinus;
 import { pinus } from 'pinus';
-// import { utils } from 'pinus/dist/lib/util/utils.ts';
 const utils = require('pinus/dist/lib/util/utils');
-const handler = require('pinus/dist/lib/connectors/common/handler');
+const handlerMod = require('pinus/dist/lib/connectors/common/handler');
+const handler = handlerMod.default;
 const Constants = require('pinus/dist/lib/util/constants');
 const Kick = require('pinus/dist/lib/connectors/commands/kick');
 const Handshake = require('pinus/dist/lib/connectors/commands/handshake');
 const HandshakeCommand = Handshake.HandshakeCommand;
 const Heartbeat = require('pinus/dist/lib/connectors/commands/heartbeat');
-const HeartbeatCommand = Heartbeat.HeartbeatCommand; 
+const HeartbeatCommand = Heartbeat.HeartbeatCommand;
 const coder = require('pinus/dist/lib/connectors/common/coder');
-import { IConnector } from '../interfaces/IConnector';
-
-import {Protocol, Package, Message} from 'pinus-protocol';
-// const Package = Protocol.Package;
-// const Message = Protocol.Message;
-supportPomeloPackage = true;
-// let protocol;
-// let Package;
-// let Message;
-// try {
-//     protocol = require('pomelo-protocol');
-//     Package = protocol.Package;
-//     Message = protocol.Message;
-// } catch (e) {
-//     supportPomeloPackage = false;
-//     protocol = undefined;
-//     Package = undefined;
-//     Message = undefined;
-// }
-
-// try {
-//     let protobuf = require('pomelo-protobuf');
-// } catch (e) {
-//     supportPomeloPackage = false;
-//     let protobuf = undefined;
-// }
+import { Protocol, Package, Message } from 'pinus-protocol';
 import { Protobuf } from 'pinus-protobuf';
+
+import { IConnector } from '../interfaces/IConnector';
 import { ISocket } from '../interfaces/ISocket';
 
 const RES_OK = 200;
-// let protocol: any;
 let protobuf: any;
 
 export const getApp = function () {
@@ -87,84 +41,58 @@ export const getApp = function () {
 };
 
 export const encode = function (reqid: number, route: string, msg: object) {
-    if (supportPomeloPackage) {
-        // return coder.encode.bind(this)(reqid, route, msg);
-        return coder.encode(reqid, route, msg);
-    } else {
-        return JSON.stringify({
-            id: reqid,
-            route,
-            body: msg
-        });
-    }
+    return coder.encode(reqid, route, msg);
 };
 
 export function decode(msg: Buffer): string;
 export function decode(msg: string): string;
 export function decode(msg: any) {
-    if (supportPomeloPackage) {
-        // return coder.decode.bind(this)(msg);
-        return coder.decode(msg);
-    } else {
-        if (msg instanceof Buffer) {
-            return JSON.parse(msg.toString());
-        } else if (typeof msg === 'string') {
-            return JSON.parse(msg);
-        } else {
-            return '';
-        }
-    }
+    return coder.decode(msg);
 }
 
 export const setupHandler = function (connector: any, socket: any, opts: any) {
-    if (supportPomeloPackage) {
-        connector.handshake = connector.handshake || new HandshakeCommand(opts);
-        if (!connector.heartbeat) {
-            if (!opts.heartbeat) {
-                opts.heartbeat = opts.interval / 1000;
-                opts.timeout = opts.heartbeat * 2;
-            }
-            if (opts.heartbeat * 1000 < opts.interval) {
-                console.warn('heartbeat interval must longer than kcp interval');
-                opts.heartbeat = opts.interval / 1000;
-            }
-            if (opts.timeout * 1000 < 2 * opts.interval) {
-                console.warn('timeout must longer than kcp interval * 2');
-                opts.timeout = opts.heartbeat * 2;
-            }
-            connector.heartbeat = new HeartbeatCommand(Object.assign(opts, { disconnectOnTimeout: true }));
+    connector.handshake = connector.handshake || new HandshakeCommand(opts);
+    if (!connector.heartbeat) {
+        if (!opts.heartbeat) {
+            opts.heartbeat = opts.interval / 1000;
+            opts.timeout = opts.heartbeat * 2;
         }
-        socket.on('handshake',
-            connector.handshake.handle.bind(connector.handshake, socket));
-        socket.on('heartbeat',
-            connector.heartbeat.handle.bind(connector.heartbeat, socket));
-        socket.on('disconnect',
-            connector.heartbeat.clear.bind(connector.heartbeat, socket.id));
-        socket.on('disconnect', function () {
-            connector.emit('disconnect', socket);
-        });
-        socket.on('closing', Kick.handle.bind(null, socket));
+        if (opts.heartbeat * 1000 < opts.interval) {
+            console.warn('heartbeat interval must longer than kcp interval');
+            opts.heartbeat = opts.interval / 1000;
+        }
+        if (opts.timeout * 1000 < 2 * opts.interval) {
+            console.warn('timeout must longer than kcp interval * 2');
+            opts.timeout = opts.heartbeat * 2;
+        }
+        connector.heartbeat = new HeartbeatCommand(Object.assign(opts, { disconnectOnTimeout: true }));
     }
+    socket.on('handshake',
+        connector.handshake.handle.bind(connector.handshake, socket));
+    socket.on('heartbeat',
+        connector.heartbeat.handle.bind(connector.heartbeat, socket));
+    socket.on('disconnect',
+        connector.heartbeat.clear.bind(connector.heartbeat, socket.id));
+    socket.on('disconnect', function () {
+        connector.emit('disconnect', socket);
+    });
+    socket.on('closing', Kick.handle.bind(null, socket));
 };
 
 export const handlePackage = function (socket: any, pkg: any) {
-    if (!!pkg && supportPomeloPackage) {
-        pkg = Package.decode(pkg);
-        if (Array.isArray(pkg)) {
-            for (let p in pkg) {
-                if (isHandshakeACKPackage(pkg[p].type)) {
-                    socket.state = 2; // ST_WORKING
-                }
-                handler(socket, pkg[p]);
-            }
-        } else {
-            if (isHandshakeACKPackage(pkg.type)) {
+    pkg = Package.decode(pkg);
+    if (Array.isArray(pkg)) {
+        for (let p in pkg) {
+            if (isHandshakeACKPackage(pkg[p].type)) {
                 socket.state = 2; // ST_WORKING
             }
-            handler(socket, pkg);
+            handler(socket, pkg[p]);
         }
     } else {
-        socket.emit('message', pkg);
+        if (isHandshakeACKPackage(pkg.type)) {
+            socket.state = 2; // ST_WORKING
+        }
+        handler(socket, pkg);
     }
 };
 
@@ -172,9 +100,9 @@ let heartbeatInterval = 0;
 export const getHeartbeatInterval = function () { return heartbeatInterval; };
 let heartbeatTimeout = 0;
 export const getHeartbeatTimeout = function () { return heartbeatTimeout; };
-let pomeloCoderData: { dict: any, abbrs: any , protos: any} = { dict: null, abbrs: null , protos: null};
+let pomeloCoderData: { dict: any, abbrs: any, protos: any } = { dict: null, abbrs: null, protos: null };
 export const initProtocol = function (data: any) {
-    if (!!data && supportPomeloPackage) {
+    if (!!data) {
         if (data.code !== RES_OK) {
             console.warn('Handshake response code : ' + data.code);
             return;
@@ -254,23 +182,23 @@ export const messagePackage = function (reqid: number, route: string, msg: any) 
 };
 
 export const isHandshakePackage = function (type: number) {
-    return (supportPomeloPackage && type == Package.TYPE_HANDSHAKE);
+    return type == Package.TYPE_HANDSHAKE;
 }
 
 export const isHandshakeACKPackage = function (type: number) {
-    return (supportPomeloPackage && type == Package.TYPE_HANDSHAKE_ACK);
+    return type == Package.TYPE_HANDSHAKE_ACK;
 }
 
 export const isHeartbeatPackage = function (type: number) {
-    return (supportPomeloPackage && type == Package.TYPE_HEARTBEAT);
+    return type == Package.TYPE_HEARTBEAT;
 }
 
 export const isDataPackage = function (type: number) {
-    return (supportPomeloPackage && type == Package.TYPE_DATA);
+    return type == Package.TYPE_DATA;
 }
 
 export const isKickPackage = function (type: number) {
-    return (supportPomeloPackage && type == Package.TYPE_KICK);
+    return type == Package.TYPE_KICK;
 }
 
 export const kcpHeadDecode = function (bytes: Buffer) {

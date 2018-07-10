@@ -43,83 +43,68 @@ export class Connector extends EventEmitter {
         this.useProtobuf = opts.useProtobuf;
         this.clientsForKcp = new Map<number, any>();
         this.socket = dgram.createSocket('udp4');
-    };
+    }
 
     start(cb: () => void) {
-        var self = this;
-        if (this.opts.usePomeloPackage) {
-            var app = pinuscoder.getApp();
-            this.connector = app.components.__connector__.connector;
-            this.dictionary = app.components.__dictionary__;
-            this.protobuf = app.components.__protobuf__;
-            this.decodeIO_protobuf = app.components.__decodeIO__protobuf__;
-        }
-        this.socket.on('message', function (msg, peer) {
-            self.bindSocket(self.socket, peer.address, peer.port, msg);
+        const app = pinuscoder.getApp();
+        this.connector = app.components.__connector__.connector;
+        this.dictionary = app.components.__dictionary__;
+        this.protobuf = app.components.__protobuf__;
+        this.decodeIO_protobuf = app.components.__decodeIO__protobuf__;
+        this.socket.on('message', (msg, peer) => {
+            this.bindSocket(this.socket, peer.address, peer.port, msg);
         });
-        self.on('disconnect', function (kcpsocket) {
+        this.on('disconnect', (kcpsocket) => {
             const conv = kcpsocket.opts.conv;
-            delete self.clientsForKcp[conv];
+            delete this.clientsForKcp[conv];
         });
-        this.socket.on('error', function (error) {
+        this.socket.on('error', (error) => {
             return;
         });
 
         this.socket.bind(this.port);
         process.nextTick(cb);
-    };
+    }
 
     bindSocket(socket: dgram.Socket, address: string, port: number, msg?: any) {
-        const self = this;
         let conv, kcpsocket: KcpSocket | undefined;
         if (msg) {
             var kcpHead = pinuscoder.kcpHeadDecode(msg);
             conv = kcpHead.conv;
-            kcpsocket = self.clientsForKcp[conv];
+            kcpsocket = this.clientsForKcp[conv];
         }
         if (!kcpsocket && conv) {
-            kcpsocket = new KcpSocket(curId++, socket, address, port, Object.assign({ conv: conv }, self.opts));
-            if (!!self.opts && self.opts.usePomeloPackage) {
-                pinuscoder.setupHandler(self, kcpsocket, self.opts);
-            }
-            self.clientsForKcp[conv] = kcpsocket;
-            self.emit('connection', kcpsocket);
+            kcpsocket = new KcpSocket(curId++, socket, address, port, Object.assign({ conv: conv }, this.opts));
+            pinuscoder.setupHandler(this, kcpsocket, this.opts);
+            this.clientsForKcp[conv] = kcpsocket;
+            this.emit('connection', kcpsocket);
         }
         if (!!msg && !!kcpsocket) {
             kcpsocket.emit('input', msg);
         }
-    };
-    // static decode = decode;
-    decode(msg: Buffer | string) {
-        if (this.opts && this.opts.usePomeloPackage) {
-            return pinuscoder.decode.bind(this)(msg);
-        } else {
-            if (msg instanceof Buffer) {
-                return JSON.parse(msg.toString());
-            } else {
-                return JSON.parse(msg);
-            }
-        }
-    };
+    }
 
-    // static encode 
+    static decode(msg: Buffer | string) {
+        return pinuscoder.decode.bind(this)(msg);
+    }
+
+    decode(msg: Buffer | string) {
+        return Connector.decode(msg);
+    }
+
+    static encode(reqid: number, route: string, msg: any) {
+        return pinuscoder.encode.bind(this)(reqid, route, msg);
+    }
+
     encode(reqid: number, route: string, msg: any) {
-        if (this.opts && this.opts.usePomeloPackage) {
-            return pinuscoder.encode.bind(this)(reqid, route, msg);
-        } else {
-            return JSON.stringify({
-                id: reqid,
-                route: route,
-                body: msg
-            });
-        }
-    };
+        return Connector.encode(reqid, route, msg);
+    }
 
     stop(force: any, cb: () => void) {
         if (this.socket) {
             this.socket.close();
         }
         process.nextTick(cb);
-    };
+    }
 }
 
