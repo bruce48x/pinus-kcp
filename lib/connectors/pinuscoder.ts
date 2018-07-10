@@ -132,7 +132,7 @@ export const setupHandler = function (connector: any, socket: any, opts: any) {
                 console.warn('timeout must longer than kcp interval * 2');
                 opts.timeout = opts.heartbeat * 2;
             }
-            connector.heartbeat = new HeartbeatCommand(utils.extends(opts, { disconnectOnTimeout: true }));
+            connector.heartbeat = new HeartbeatCommand(Object.assign(opts, { disconnectOnTimeout: true }));
         }
         socket.on('handshake',
             connector.handshake.handle.bind(connector.handshake, socket));
