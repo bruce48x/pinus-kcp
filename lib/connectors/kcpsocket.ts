@@ -27,7 +27,7 @@ var output = function (data: any, size: number, thiz: any) {
     thiz.socket.send(data, 0, size, thiz.port, thiz.host);
 };
 
-export default class KcpSocket extends EventEmitter implements ISocket {
+export class KcpSocket extends EventEmitter implements ISocket {
     id: number;
     socket: dgram.Socket;
     host: string;
@@ -82,7 +82,7 @@ export default class KcpSocket extends EventEmitter implements ISocket {
 
         // 超时还未握手就绪，就删除此 socket
         this._initTimer = setTimeout(() => {
-            if ( this.state !== NetState.WORKING) {
+            if (this.state !== NetState.WORKING) {
                 this.disconnect();
             }
             this._initTimer = null;
@@ -117,7 +117,6 @@ export default class KcpSocket extends EventEmitter implements ISocket {
             return;
         }
         this.kcpObj.send(msg);
-        this.kcpObj.flush();
     }
 
     sendForce(msg: Buffer) {

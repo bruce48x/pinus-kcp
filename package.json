@@ -1,6 +1,6 @@
 {
   "name": "pinus-kcp",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "description": "用于 pinus (ts 版 pomelo)，提供一个 kcp 的 connector",
   "main": "./dist/index.js",
   "scripts": {

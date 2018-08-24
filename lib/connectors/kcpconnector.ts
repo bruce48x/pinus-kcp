@@ -16,8 +16,9 @@
 
 import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
-import KcpSocket from './kcpsocket';
+import { KcpSocket } from './kcpsocket';
 import * as pinuscoder from './pinuscoder';
+import { IConnector, DictionaryComponent, ProtobufComponent, IComponent } from 'pinus';
 
 let curId = 1;
 
@@ -27,11 +28,11 @@ export class Connector extends EventEmitter {
     port: number;
     useDict: boolean;
     useProtobuf: boolean;
-    clientsForKcp: any;
-    connector: any;
-    dictionary: any;
-    protobuf: any;
-    decodeIO_protobuf: any;
+    clientsForKcp: { [conv: number]: KcpSocket };
+    connector: IConnector;
+    dictionary: DictionaryComponent;
+    protobuf: ProtobufComponent;
+    decodeIO_protobuf: IComponent;
     socket: dgram.Socket;
 
     constructor(port: number, host: string, opts: any) {
@@ -41,7 +42,7 @@ export class Connector extends EventEmitter {
         this.port = port;
         this.useDict = opts.useDict;
         this.useProtobuf = opts.useProtobuf;
-        this.clientsForKcp = new Map<number, any>();
+        this.clientsForKcp = {};
         this.socket = dgram.createSocket('udp4');
     }
 
