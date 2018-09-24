@@ -84,15 +84,9 @@ export const handlePackage = function (socket: any, pkg: any) {
     pkg = Package.decode(pkg);
     if (Array.isArray(pkg)) {
         for (let p in pkg) {
-            if (isHandshakeACKPackage(pkg[p].type)) {
-                socket.state = NetState.WORKING; // ST_WORKING
-            }
             handler(socket, pkg[p]);
         }
     } else {
-        if (isHandshakeACKPackage(pkg.type)) {
-            socket.state = NetState.WORKING; // ST_WORKING
-        }
         handler(socket, pkg);
     }
 };
