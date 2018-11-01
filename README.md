@@ -26,3 +26,6 @@ pinus-kcp
 
 方便跟 tcp 连接相互配合着使用，参见 [kcp 的 wiki](https://github.com/skywind3000/kcp/wiki/Cooperate-With-Tcp-Server)
 
+====
+
+另外修复了若干BUG，提高性能和稳定性，欢迎使用和提建议。
