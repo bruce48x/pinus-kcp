@@ -29,3 +29,27 @@ pinus-kcp
 ====
 
 另外修复了若干BUG，提高性能和稳定性，欢迎使用和提建议。
+
+## 安装
+
+`npm install pinus-kcp`
+
+## 使用
+
+```typescript
+import * as kcpconnector from 'pinus-kcp';
+
+app.configure('production|development', 'connector', function () {
+    // app.use(protobufPlugin, {protobuf:{}});
+    app.set('connectorConfig', {
+        connector: kcpconnector.Connector,
+        // kcp options
+        sndwnd: 64,
+        rcvwnd: 64,
+        nodelay: 1,
+        interval: 10,
+        resend: 2,
+        nc: 1,
+    });
+});
+```
