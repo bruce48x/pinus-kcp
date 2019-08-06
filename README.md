@@ -40,7 +40,6 @@ pinus-kcp
 import * as kcpconnector from 'pinus-kcp';
 
 app.configure('production|development', 'connector', function () {
-    // app.use(protobufPlugin, {protobuf:{}});
     app.set('connectorConfig', {
         connector: kcpconnector.Connector,
         // kcp options
