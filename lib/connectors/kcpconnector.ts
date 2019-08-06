@@ -19,6 +19,7 @@ import { EventEmitter } from 'events';
 import { KcpSocket } from './kcpsocket';
 import * as pinuscoder from './pinuscoder';
 import { IConnector, DictionaryComponent, ProtobufComponent, IComponent } from 'pinus';
+import * as coder from '../common/coder';
 
 let curId = 1;
 
@@ -86,7 +87,7 @@ export class Connector extends EventEmitter {
     }
 
     static decode(msg: Buffer | string) {
-        return pinuscoder.decode.bind(this)(msg);
+        return coder.decode.bind(this)(msg);
     }
 
     decode(msg: Buffer | string) {
@@ -94,7 +95,7 @@ export class Connector extends EventEmitter {
     }
 
     static encode(reqid: number, route: string, msg: any) {
-        return pinuscoder.encode.bind(this)(reqid, route, msg);
+        return coder.encode.bind(this)(reqid, route, msg);
     }
 
     encode(reqid: number, route: string, msg: any) {

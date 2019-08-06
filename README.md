@@ -50,6 +50,10 @@ app.configure('production|development', 'connector', function () {
         interval: 10,
         resend: 2,
         nc: 1,
+        // 1.0 新增参数
+        // 每次处理 package 时都刷新心跳，避免收不到心跳包的情况下掉线的问题
+        // 这个值默认是 false
+        heartbeatOnData: true,  
     });
 });
 ```

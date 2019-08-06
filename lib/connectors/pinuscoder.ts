@@ -15,19 +15,13 @@
  */
 
 import { pinus } from 'pinus';
-const utils = require('pinus/dist/lib/util/utils');
-const handlerMod = require('pinus/dist/lib/connectors/common/handler');
-const handler = handlerMod.default;
-const Constants = require('pinus/dist/lib/util/constants');
-const Kick = require('pinus/dist/lib/connectors/commands/kick');
-const Handshake = require('pinus/dist/lib/connectors/commands/handshake');
-const HandshakeCommand = Handshake.HandshakeCommand;
-const Heartbeat = require('pinus/dist/lib/connectors/commands/heartbeat');
-const HeartbeatCommand = Heartbeat.HeartbeatCommand;
-const coder = require('pinus/dist/lib/connectors/common/coder');
+import handler from '../common/handler';
+import * as Kick from '../commands/kick';
+import { HandshakeCommand } from '../commands/handshake';
+import { HeartbeatCommand } from '../commands/heartbeat';
+import * as coder from '../common/coder';
 import { Protocol, Package, Message } from 'pinus-protocol';
 import { Protobuf } from 'pinus-protobuf';
-import { NetState } from '../const/const';
 
 import { IConnector } from '../interfaces/IConnector';
 import { ISocket } from '../interfaces/ISocket';
@@ -40,16 +34,6 @@ export const getApp = function () {
         return pinus.app;
     }
 };
-
-export const encode = function (reqid: number, route: string, msg: object) {
-    return coder.encode(reqid, route, msg);
-};
-
-export function decode(msg: Buffer): string;
-export function decode(msg: string): string;
-export function decode(msg: any) {
-    return coder.decode(msg);
-}
 
 export const setupHandler = function (connector: any, socket: any, opts: any) {
     connector.handshake = connector.handshake || new HandshakeCommand(opts);
@@ -82,6 +66,9 @@ export const setupHandler = function (connector: any, socket: any, opts: any) {
 
 export const handlePackage = function (socket: any, pkg: any) {
     pkg = Package.decode(pkg);
+    if (pkg.type == 6) {
+        return;
+    }
     if (Array.isArray(pkg)) {
         for (let p in pkg) {
             handler(socket, pkg[p]);

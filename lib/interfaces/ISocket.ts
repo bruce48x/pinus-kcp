@@ -11,16 +11,17 @@ export interface ISocket {
     sendBatch(msgs: any[]): void;
 
     emit(evt: 'heartbeat'): void;
-    emit(evt: 'message' , pkg: any): void;
-    emit(evt: 'closing' , reason: string): void;
-    emit(evt: 'handshake' , pkg: any): void;
+    emit(evt: 'message', pkg: any): void;
+    emit(evt: 'closing', reason: string): void;
+    emit(evt: 'handshake', pkg: any): void;
 
     state: number;
 
-    id ?: number;
+    id?: number;
 
-    handshakeResponse ?: (response: any) => void;
-    sendForce ?: (response: any) => void;
+    handshakeResponse?: (response: any) => void;
+    sendForce?: (response: any) => void;
 
-    remoteAddress ?: {ip: string , port ?: number};
+    remoteAddress?: { ip: string, port?: number };
+    heartbeatOnData?: boolean;
 }

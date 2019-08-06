@@ -37,6 +37,7 @@ export class KcpSocket extends EventEmitter implements ISocket {
     kcpObj: kcp.KCP | null;
     state: number;
     _initTimer: NodeJS.Timer | null;
+    heartbeatOnData: boolean;
 
     constructor(id: number, socket: dgram.Socket, address: string, port: number, opts: any) {
         super();
@@ -52,6 +53,7 @@ export class KcpSocket extends EventEmitter implements ISocket {
         var conv = opts.conv || 123;
         this.kcpObj = new kcp.KCP(conv, this);
         if (!!opts) {
+            this.heartbeatOnData = !!opts.heartbeatOnData;
             var nodelay = opts.nodelay || 0;
             var interval = opts.interval || 100;
             var resend = opts.resend || 0;
