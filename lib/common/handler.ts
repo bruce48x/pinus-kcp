@@ -44,7 +44,7 @@ let handleData = function (socket: ISocket, pkg: any) {
     }
     if (!!socket.heartbeatOnData) {
         // 每次收到 package 都触发 heartbeat ，避免客户端没发 heartbeat 而导致掉线
-        socket.emit('heartbeat');
+        socket.emit('heartbeatreset');
     }
     socket.emit('message', pkg);
 };

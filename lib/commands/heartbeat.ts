@@ -80,4 +80,32 @@ export class HeartbeatCommand {
             delete this.timeouts[id];
         }
     }
+
+    reset(socket: ISocket) {
+        if (!this.heartbeat) {
+            // no heartbeat setting
+            return;
+        }
+
+        let self = this;
+
+        if (!this.clients[socket.id]) {
+            // clear timers when socket disconnect or error
+            this.clients[socket.id] = 1;
+            socket.once('disconnect', this.clearTimers.bind(this, socket.id));
+            socket.once('error', this.clearTimers.bind(this, socket.id));
+        }
+
+        // clear timeout timer
+        if (self.disconnectOnTimeout) {
+            this.clear(socket.id);
+        }
+
+        if (self.disconnectOnTimeout) {
+            self.timeouts[socket.id] = setTimeout(function () {
+                logger.info('client %j heartbeat timeout.', socket.id);
+                socket.disconnect();
+            }, self.timeout);
+        }
+    }
 }

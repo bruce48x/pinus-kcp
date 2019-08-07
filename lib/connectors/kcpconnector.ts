@@ -20,6 +20,7 @@ import { KcpSocket } from './kcpsocket';
 import * as pinuscoder from './pinuscoder';
 import { IConnector, DictionaryComponent, ProtobufComponent, IComponent } from 'pinus';
 import * as coder from '../common/coder';
+import { pinus } from 'pinus';
 
 let curId = 1;
 
@@ -48,7 +49,7 @@ export class Connector extends EventEmitter {
     }
 
     start(cb: () => void) {
-        const app = pinuscoder.getApp();
+        const app = this.opts.app || pinus.app;
         this.connector = app.components.__connector__.connector;
         this.dictionary = app.components.__dictionary__;
         this.protobuf = app.components.__protobuf__;

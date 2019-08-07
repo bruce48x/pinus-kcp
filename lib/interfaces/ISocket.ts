@@ -11,6 +11,7 @@ export interface ISocket {
     sendBatch(msgs: any[]): void;
 
     emit(evt: 'heartbeat'): void;
+    emit(evt: 'heartbeatreset'): void;
     emit(evt: 'message', pkg: any): void;
     emit(evt: 'closing', reason: string): void;
     emit(evt: 'handshake', pkg: any): void;

@@ -29,12 +29,6 @@ import { ISocket } from '../interfaces/ISocket';
 const RES_OK = 200;
 let protobuf: any;
 
-export const getApp = function () {
-    if (!!pinus) {
-        return pinus.app;
-    }
-};
-
 export const setupHandler = function (connector: any, socket: any, opts: any) {
     connector.handshake = connector.handshake || new HandshakeCommand(opts);
     if (!connector.heartbeat) {
@@ -52,15 +46,11 @@ export const setupHandler = function (connector: any, socket: any, opts: any) {
         }
         connector.heartbeat = new HeartbeatCommand(Object.assign(opts, { disconnectOnTimeout: true }));
     }
-    socket.on('handshake',
-        connector.handshake.handle.bind(connector.handshake, socket));
-    socket.on('heartbeat',
-        connector.heartbeat.handle.bind(connector.heartbeat, socket));
-    socket.on('disconnect',
-        connector.heartbeat.clear.bind(connector.heartbeat, socket.id));
-    socket.on('disconnect', function () {
-        connector.emit('disconnect', socket);
-    });
+    socket.on('handshake', connector.handshake.handle.bind(connector.handshake, socket));
+    socket.on('heartbeat', connector.heartbeat.handle.bind(connector.heartbeat, socket));
+    socket.on('heartbeatreset', connector.heartbeat.reset.bind(connector.heartbeat, socket));
+    socket.on('disconnect', connector.heartbeat.clear.bind(connector.heartbeat, socket.id));
+    socket.on('disconnect', connector.emit.bind(connector, 'disconnect', socket));
     socket.on('closing', Kick.handle.bind(null, socket));
 };
 
