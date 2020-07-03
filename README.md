@@ -12,17 +12,15 @@ pinus-kcp
 说明
 ============
 
-[pomelo-kcp-x](https://github.com/bruce48x/pomelo-kcp) 的 TypeScript 版本
-
-结合 [Pinus](https://github.com/node-pinus/pinus) 使用
+[Pinus](https://github.com/node-pinus/pinus) 的 kcp connector
 
 ====
 
-修改了 [pomelo-kcp](https://www.npmjs.com/package/pomelo-kcp)
+修改自 [pomelo-kcp](https://www.npmjs.com/package/pomelo-kcp)
 
-原本是所有连接共用一个 conv
+pomelo-kcp 原本是所有连接共用一个 conv
 
-改为根据客户端发来的消息的 conv 创建对应的 kcpsocket 对象
+pinus-kcp 改为根据客户端发来的消息的 conv 创建对应的 kcpsocket 对象
 
 方便跟 tcp 连接相互配合着使用，参见 [kcp 的 wiki](https://github.com/skywind3000/kcp/wiki/Cooperate-With-Tcp-Server)
 
@@ -32,7 +30,7 @@ pinus-kcp
 
 ## 安装
 
-`npm install pinus-kcp`
+`yarn add pinus-kcp`
 
 ## 使用
 
