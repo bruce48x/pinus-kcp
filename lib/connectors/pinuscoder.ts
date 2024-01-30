@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-import { pinus } from 'pinus';
 import handler from '../common/handler';
 import * as Kick from '../commands/kick';
 import { HandshakeCommand } from '../commands/handshake';
 import { HeartbeatCommand } from '../commands/heartbeat';
-import * as coder from '../common/coder';
 import { Protocol, Package, Message } from 'pinus-protocol';
-import { Protobuf } from 'pinus-protobuf';
-
-import { IConnector } from '../interfaces/IConnector';
-import { ISocket } from '../interfaces/ISocket';
+import { Protobuf } from 'pinus-protobufjs';
 
 const RES_OK = 200;
 let protobuf: any;
