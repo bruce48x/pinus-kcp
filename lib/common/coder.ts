@@ -1,10 +1,9 @@
 import { Message } from 'pinus-protocol';
 import * as  Constants from '../util/constants';
 import { getLogger } from 'pinus-logger';
+import * as path from 'node:path';
 import { IConnector } from '../interfaces/IConnector';
-import * as path from 'path';
 let logger = getLogger('pinus', path.basename(__filename));
-
 
 let encode = function (this: IConnector, reqId: number, route: string, msg: any) {
     if (!!reqId) {

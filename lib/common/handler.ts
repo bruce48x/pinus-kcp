@@ -1,7 +1,7 @@
 import { Package, Protocol } from 'pinus-protocol';
 import { getLogger } from 'pinus-logger';
+import * as path from 'node:path';
 import { ISocket } from '../interfaces/ISocket';
-import * as path from 'path';
 let logger = getLogger('pinus', path.basename(__filename));
 
 
@@ -41,10 +41,6 @@ let handleHeartbeat = function (socket: ISocket, pkg: any) {
 let handleData = function (socket: ISocket, pkg: any) {
     if (socket.state !== ST_WORKING) {
         return;
-    }
-    if (!!socket.heartbeatOnData) {
-        // 每次收到 package 都触发 heartbeat ，避免客户端没发 heartbeat 而导致掉线
-        socket.emit('heartbeatreset');
     }
     socket.emit('message', pkg);
 };

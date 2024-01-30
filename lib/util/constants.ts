@@ -1,5 +1,3 @@
-// import { RemoteServerCode } from '../index';
-
 export interface RemoteServerCode {
     namespace: string;
     serverType: string;

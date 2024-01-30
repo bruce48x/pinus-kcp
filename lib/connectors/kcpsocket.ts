@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as path from 'path';
+import * as path from 'node:path';
 import { getLogger } from 'pinus-logger';
 let logger = getLogger('pinus', path.basename(__filename));
 import { EventEmitter } from 'events';
@@ -22,8 +22,8 @@ import * as pinuscoder from './pinuscoder';
 import * as protocol from 'pinus-protocol';
 const Package = protocol.Package;
 import * as dgram from 'dgram';
-import { ISocket } from '../interfaces/ISocket';
 import { NetState } from '../const/const';
+import { ISocket } from '../interfaces/ISocket';
 
 function output(data: any, size: number, thiz: KcpSocket) {
     thiz.socket.send(data, 0, size, thiz.port, thiz.host);

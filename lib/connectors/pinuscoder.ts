@@ -22,7 +22,7 @@ import { Protocol, Package, Message } from 'pinus-protocol';
 import { Protobuf } from 'pinus-protobufjs';
 
 const RES_OK = 200;
-let protobuf: any;
+let protobuf: Protobuf;
 
 export const setupHandler = function (connector: any, socket: any, opts: any) {
     connector.handshake = connector.handshake || new HandshakeCommand(opts);

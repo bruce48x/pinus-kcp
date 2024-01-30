@@ -1,10 +1,11 @@
 {
   "name": "pinus-kcp",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "用于 pinus (ts 版 pomelo)，提供一个 kcp 的 connector",
-  "main": "./dist/index.js",
+  "main": "./dist/index",
+  "types": "./lib/index",
   "scripts": {
-    "build": "tsc"
+    "build": "rimraf ./dist && tsc"
   },
   "repository": {
     "type": "git",
@@ -20,11 +21,16 @@
   "dependencies": {
     "@types/node": "^16.0",
     "node-kcp-x": "^1.1",
-    "pinus": "^1.4.2",
-    "pinus-protobufjs": "^1.0.0",
-    "pinus-protocol": "^1.4.2"
+    "pinus": "^1.7.0",
+    "pinus-protobufjs": "^1.0.2",
+    "pinus-protocol": "^1.7.0"
   },
   "devDependencies": {
+    "@types/async": "^3.2.24",
+    "@types/crc": "^3.8.3",
+    "@types/uuid": "^9.0.8",
+    "@types/ws": "^8.5.10",
+    "rimraf": "^5.0.5",
     "typescript": "^4.3.5"
   },
   "bugs": {
