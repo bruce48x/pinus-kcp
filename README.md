@@ -12,7 +12,9 @@ pinus-kcp
 说明
 ============
 
-[Pinus](https://github.com/node-pinus/pinus) 的 kcp connector
+[pomelo-kcp](https://www.npmjs.com/package/pomelo-kcp) 的 TypeScript 版本
+
+结合 [Pinus](https://github.com/node-pinus/pinus) 使用
 
 ====
 
@@ -23,10 +25,6 @@ pomelo-kcp 原本是所有连接共用一个 conv
 pinus-kcp 改为根据客户端发来的消息的 conv 创建对应的 kcpsocket 对象
 
 方便跟 tcp 连接相互配合着使用，参见 [kcp 的 wiki](https://github.com/skywind3000/kcp/wiki/Cooperate-With-Tcp-Server)
-
-====
-
-另外修复了若干BUG，提高性能和稳定性，欢迎使用和提建议。
 
 ## 安装
 
@@ -53,4 +51,37 @@ app.configure('production|development', 'connector', function () {
         heartbeatOnData: true,  
     });
 });
+```
+
+## 更新说明
+
+### version v1.1.0
+
+增加 stream 模式
+
+## 运行测试
+### 链接
+```sh
+cd pinus-kcp
+yarn link
+```
+```sh
+cd pinus-kcp/examples
+yarn link pinus-kcp
+```
+
+### server
+```sh
+cd packages/pinusmod-kcp/examples
+# 启动
+yarn runserver
+# 查看
+yarn listserver
+# 停止
+yarn stopserver
+```
+### client
+```sh
+yarn runclient
+# ctrl + c 停止客户端
 ```

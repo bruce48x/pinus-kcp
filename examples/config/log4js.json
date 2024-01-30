@@ -1,0 +1,29 @@
+{
+    "appenders": {
+        "console": {
+            "type": "console"
+        },
+        "pinus": {
+            "type": "file",
+            "filename": "${opts:base}/logs/pinus-${opts:serverId}.log",
+            "maxLogSize": 123217728,
+            "layout": {
+                "type": "basic"
+            },
+            "backups": 20
+        }
+    },
+    "categories": {
+        "default": {
+            "appenders": [
+                "console",
+                "pinus"
+            ],
+            "level": "info"
+        }
+    },
+    "prefix": "${opts:serverId} ",
+    "replaceConsole": false,
+    "lineDebug": true,
+    "errorStack": false
+}

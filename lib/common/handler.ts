@@ -58,9 +58,11 @@ export default function (socket: ISocket, pkg: any) {
     let handler = handlers[pkg.type];
     if (!!handler) {
         handler(socket, pkg);
+        return 0;
     } else {
         logger.error('could not find handle invalid data package.');
         socket.disconnect();
+        return 1;
     }
 }
 

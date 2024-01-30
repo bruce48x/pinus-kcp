@@ -1,4 +1,7 @@
 .DS_Store
-node_modules
-.vscode
-# dist
+.git
+lib/
+examples/
+node_modules/
+index.ts
+tsconfig.json

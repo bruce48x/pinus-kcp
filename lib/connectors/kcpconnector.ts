@@ -18,9 +18,8 @@ import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
 import { KcpSocket } from './kcpsocket';
 import * as pinuscoder from './pinuscoder';
-import { IConnector, DictionaryComponent, ProtobufComponent, IComponent } from 'pinus';
+import { IConnector, DictionaryComponent, ProtobufComponent, IComponent, pinus } from 'pinus';
 import * as coder from '../common/coder';
-import { pinus } from 'pinus';
 
 let curId = 1;
 
@@ -72,12 +71,12 @@ export class Connector extends EventEmitter {
     bindSocket(socket: dgram.Socket, address: string, port: number, msg?: any) {
         let conv, kcpsocket: KcpSocket | undefined;
         if (msg) {
-            var kcpHead = pinuscoder.kcpHeadDecode(msg);
+            const kcpHead = pinuscoder.kcpHeadDecode(msg);
             conv = kcpHead.conv;
             kcpsocket = this.clientsForKcp[conv];
         }
         if (!kcpsocket && conv) {
-            kcpsocket = new KcpSocket(curId++, socket, address, port, Object.assign({ conv: conv }, this.opts));
+            kcpsocket = new KcpSocket(curId++, socket, address, port, Object.assign({ conv }, this.opts));
             pinuscoder.setupHandler(this, kcpsocket, this.opts);
             this.clientsForKcp[conv] = kcpsocket;
             this.emit('connection', kcpsocket);

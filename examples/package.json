@@ -1,0 +1,14 @@
+{
+  "name": "pinus-kcp-echo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "runserver": "pinus start",
+    "listserver": "pinus list --port 22330",
+    "stopserver": "pinus stop --port 22330",
+    "runclient": "node client.js"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,14 @@
+{
+    "development": {
+        "connector": [
+            {
+                "id": "conn-1",
+                "host": "127.0.0.1",
+                "port": 22333,
+                "frontend": true,
+                "clientHost": "127.0.0.1",
+                "clientPort": 22334
+            }
+        ]
+    }
+}

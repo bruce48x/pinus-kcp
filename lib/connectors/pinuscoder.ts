@@ -55,16 +55,23 @@ export const setupHandler = function (connector: any, socket: any, opts: any) {
 };
 
 export const handlePackage = function (socket: any, pkg: any) {
+    if (!pkg) {
+        return 1;
+    }
     pkg = Package.decode(pkg);
     if (pkg.type == 6) {
-        return;
+        return 0;
     }
     if (Array.isArray(pkg)) {
+        let result;
         for (let p in pkg) {
-            handler(socket, pkg[p]);
+            result = handler(socket, pkg[p]);
+            if (result !== 0) {
+                return result;
+            }
         }
     } else {
-        handler(socket, pkg);
+        return handler(socket, pkg);
     }
 };
 

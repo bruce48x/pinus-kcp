@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import * as path from 'path';
+import { getLogger } from 'pinus-logger';
+let logger = getLogger('pinus', path.basename(__filename));
 import { EventEmitter } from 'events';
 import * as kcp from 'node-kcp-x';
 import * as pinuscoder from './pinuscoder';
@@ -23,7 +25,7 @@ import * as dgram from 'dgram';
 import { ISocket } from '../interfaces/ISocket';
 import { NetState } from '../const/const';
 
-var output = function (data: any, size: number, thiz: any) {
+function output(data: any, size: number, thiz: KcpSocket) {
     thiz.socket.send(data, 0, size, thiz.port, thiz.host);
 };
 
@@ -39,6 +41,10 @@ export class KcpSocket extends EventEmitter implements ISocket {
     _initTimer: NodeJS.Timer | null;
     heartbeatOnData: boolean;
 
+    // stream
+    nextMsgLength: number;
+    tmpBuffer: Buffer;
+
     constructor(id: number, socket: dgram.Socket, address: string, port: number, opts: any) {
         super();
         this.id = id;
@@ -50,22 +56,27 @@ export class KcpSocket extends EventEmitter implements ISocket {
             port: this.port
         };
         this.opts = opts;
-        var conv = opts.conv || 123;
+        const conv = opts.conv || 123;
         this.kcpObj = new kcp.KCP(conv, this);
         if (!!opts) {
             this.heartbeatOnData = !!opts.heartbeatOnData;
-            var nodelay = opts.nodelay || 0;
-            var interval = opts.interval || 100;
-            var resend = opts.resend || 0;
-            var nc = opts.nc || 0;
+            const nodelay = opts.nodelay || 0;
+            const interval = opts.interval || 100;
+            const resend = opts.resend || 0;
+            const nc = opts.nc || 0;
             this.kcpObj.nodelay(nodelay, interval, resend, nc);
 
-            var sndwnd = opts.sndwnd || 32;
-            var rcvwnd = opts.rcvwnd || sndwnd;
+            const sndwnd = opts.sndwnd || 32;
+            const rcvwnd = opts.rcvwnd || sndwnd;
             this.kcpObj.wndsize(sndwnd, rcvwnd);
 
-            var mtu = opts.mtu || 1400;
+            const mtu = opts.mtu || 1400;
             this.kcpObj.setmtu(mtu);
+            if (opts.stream) {
+                this.kcpObj.stream(1);
+                this.nextMsgLength = 0;
+                this.tmpBuffer = undefined;
+            }
         }
         this.kcpObj.output(output);
         this.on('input', (msg) => {
@@ -73,8 +84,71 @@ export class KcpSocket extends EventEmitter implements ISocket {
                 return;
             }
             this.kcpObj.input(msg);
-            var data = this.kcpObj.recv();
-            if (!!data) {
+            let data = this.kcpObj.recv();
+            if (!data) {
+                return;
+            }
+            if (this.opts.stream) {
+                // stream 模式
+                const totalLen = data.byteLength;
+                let readOffset = 0;
+                while (readOffset < totalLen) {
+                    if (!this.nextMsgLength) {
+                        if (this.tmpBuffer) {
+                            const concatedBuff = Buffer.concat([this.tmpBuffer, data.slice(readOffset)]);
+                            const { len, offset } = this.decodeStreamLength(concatedBuff);
+                            if (!len) {
+                                // 数据不完整
+                                this.tmpBuffer = concatedBuff;
+                            } else {
+                                this.nextMsgLength = len;
+                                readOffset += offset;
+                            }
+                        } else {
+                            const { len, offset } = this.decodeStreamLength(data.slice(readOffset));
+                            if (!len) {
+                                // 数据不完整
+                                this.tmpBuffer = data;
+                            } else {
+                                this.nextMsgLength = len;
+                                readOffset += offset;
+                            }
+                        }
+                    }
+                    if (this.tmpBuffer) {
+                        if (this.tmpBuffer.byteLength + data.slice(readOffset).byteLength >= this.nextMsgLength) {
+                            // 有完整的包
+                            const piece = data.slice(readOffset, readOffset+this.nextMsgLength - this.tmpBuffer.byteLength);
+                            readOffset += this.nextMsgLength - this.tmpBuffer.byteLength;
+                            this.nextMsgLength = 0;
+                            const buffer = Buffer.concat([this.tmpBuffer,piece]);
+                            this.tmpBuffer = undefined;
+                            if (0 !== pinuscoder.handlePackage(this, buffer)) {
+                                break;
+                            }
+                        } else {
+                            // 不完整的包
+                            this.tmpBuffer = Buffer.concat([this.tmpBuffer, data.slice(readOffset)]);
+                            readOffset = totalLen;
+                        }
+                    } else {
+                        if (data.slice(readOffset).byteLength >= this.nextMsgLength) {
+                            // 有完整的包
+                            const piece = data.slice(readOffset, readOffset+this.nextMsgLength);
+                            readOffset += this.nextMsgLength;
+                            this.nextMsgLength = 0;
+                            if (0 !== pinuscoder.handlePackage(this, piece)) {
+                                break;
+                            }
+                        } else {
+                            // 不完整的包
+                            this.tmpBuffer = data.slice(readOffset);
+                            readOffset = totalLen;
+                        }
+                    }
+                }
+            } else {
+                // 消息模式
                 pinuscoder.handlePackage(this, data);
             }
         });
@@ -118,7 +192,11 @@ export class KcpSocket extends EventEmitter implements ISocket {
         if (!this.kcpObj) {
             return;
         }
-        this.kcpObj.send(msg);
+        if (this.opts.stream) {
+            this.kcpObj.send(this.encodeStreamLength(msg));
+        } else {
+            this.kcpObj.send(msg);
+        }
     }
 
     sendForce(msg: Buffer) {
@@ -132,8 +210,8 @@ export class KcpSocket extends EventEmitter implements ISocket {
         if (this.state != NetState.WORKING) {
             return;
         }
-        var rs = [];
-        for (var i = 0; i < msgs.length; i++) {
+        const rs = [];
+        for (let i = 0; i < msgs.length; i++) {
             rs.push(Package.encode(Package.TYPE_DATA, msgs[i]));
         }
         this.sendRaw(Buffer.concat(rs));
@@ -157,5 +235,39 @@ export class KcpSocket extends EventEmitter implements ISocket {
             this.kcpObj.release();
             this.kcpObj = null;
         }
+    }
+
+    encodeStreamLength(buffer: Buffer) {
+        let len = buffer.byteLength;
+        const lenBuff = Buffer.allocUnsafe(8).fill(0);
+        let offset = 0;
+        do {
+            let tmp = len % 128;
+            let next = Math.floor(len / 128);
+
+            if (next !== 0) {
+                tmp = tmp + 128;
+            }
+            lenBuff[offset++] = tmp;
+
+            len = next;
+        } while (len !== 0);
+        return Buffer.concat([lenBuff.slice(0, offset), buffer]);
+    }
+
+    decodeStreamLength(buff: Buffer): { len: number; offset: number; } {
+        let m = 0;
+        let offset = 0;
+        let len = 0;
+        do {
+            m = buff[offset];
+            len = len | ((m & 0x7f) << (7 * offset));
+            offset++;
+            if (offset >= buff.byteLength && m >= 128) {
+                // 数据不完整
+                return { len: 0, offset: 0 };
+            }
+        } while (m >= 128);
+        return { len, offset };
     }
 }
